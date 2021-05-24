@@ -73,6 +73,23 @@ const Mutation = {
     db.comments = db.comments.filter((comment) => comment.post !== args.id);
     return deletedPost[0];
   },
+  updatePost(parent, args, { db }, info) {
+    const { id, data } = args;
+    const post = db.posts.find((post) => post.id === id);
+    if (!post) {
+      throw new Error("No such post exists");
+    }
+    if (typeof data.title === "string" && data.title) {
+      post.title = data.title;
+    }
+    if (typeof data.body === "string" && data.body) {
+      post.body = data.body;
+    }
+    if (typeof data.published === "boolean") {
+      post.published = data.published;
+    }
+    return post;
+  },
   // *  Comment mutations
   createComment(parent, args, { db }, info) {
     const userExists = db.users.some((user) => user.id === args.data.author);
@@ -99,6 +116,17 @@ const Mutation = {
     }
     const deletedComment = db.comments.splice(commentIndex, 1);
     return deletedComment[0];
+  },
+  updateComment(parent, args, { db }, info) {
+    const { id, data } = args;
+    const comment = db.comments.find((comment) => comment.id === id);
+    if (!comment) {
+      throw new Error("No such comment exists");
+    }
+    if (typeof data.text === "string" && data.text) {
+      comment.text = data.text;
+    }
+    return comment;
   },
 };
 
