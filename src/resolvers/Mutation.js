@@ -1,6 +1,7 @@
 import uuidv4 from "uuid/v4";
 
 const Mutation = {
+  // *  User mutations
   createUser(parent, args, { db }, info) {
     const emailTaken = db.users.some((user) => user.email === args.data.email);
     if (emailTaken) {
@@ -29,6 +30,28 @@ const Mutation = {
     db.comments = db.comments.filter((comment) => comment.author !== args.id);
     return deletedUser[0];
   },
+  updateUser(parent, args, { db }, info) {
+    const { id, data } = args;
+    const user = db.users.find((user) => user.id === id);
+    if (!user) {
+      throw new Error("No such user exists");
+    }
+    if (typeof data.email === "string") {
+      const emailTaken = db.users.some((user) => user.email === data.email);
+      if (emailTaken) {
+        throw new Error("Email already exists");
+      }
+      user.email = data.email;
+    }
+    if (typeof data.name === "string") {
+      user.name = data.name;
+    }
+    if (typeof data.age !== "undefined") {
+      user.age = data.age;
+    }
+    return user;
+  },
+  // *  Post mutations
   createPost(parent, args, { db }, info) {
     const userExists = db.users.some((user) => user.id === args.data.author);
     if (!userExists) {
@@ -50,6 +73,7 @@ const Mutation = {
     db.comments = db.comments.filter((comment) => comment.post !== args.id);
     return deletedPost[0];
   },
+  // *  Comment mutations
   createComment(parent, args, { db }, info) {
     const userExists = db.users.some((user) => user.id === args.data.author);
     const postExists = db.posts.some((post) => post.id === args.data.post);
