@@ -1,5 +1,5 @@
 import { GraphQLServer } from "graphql-yoga";
-
+import uuidv4 from "uuid/v4";
 // Scalar types - String, Boolean, Int, Float, ID
 
 // Demo user data
@@ -76,11 +76,17 @@ const comments = [
 // Type definitions (schema)
 const typeDefs = `
     type Query {
-        comments: [Comment!]!
         users(query: String): [User!]!
         posts(query: String): [Post!]!
+        comments: [Comment!]!
         me: User!
         post: Post!
+    }
+
+    type Mutation {
+        createUser(name: String!, email: String!, age: Int): User!
+        createPost(title: String!, body: String!, published: Boolean!, author: ID!): Post!
+        createComment(text: String!, author: ID!,post: ID!): Comment!
     }
 
     type User {
@@ -152,6 +158,48 @@ const resolvers = {
         body: "",
         published: false,
       };
+    },
+  },
+  Mutation: {
+    createUser(parent, args, ctx, info) {
+      const emailTaken = users.some((user) => user.email === args.email);
+      if (emailTaken) {
+        throw new Error("Email already taken");
+      }
+      const user = {
+        ...args,
+        id: uuidv4(),
+      };
+      users.push(user);
+      return user;
+    },
+    createPost(parent, args, ctx, info) {
+      const userExists = users.some((user) => user.id === args.author);
+      if (!userExists) {
+        throw new Error("No such author exists");
+      }
+      const post = {
+        ...args,
+        id: uuidv4(),
+      };
+      posts.push(post);
+      return post;
+    },
+    createComment(parent, args, ctx, info) {
+      const userExists = users.some((user) => user.id === args.author);
+      const postExists = posts.some((post) => post.id === args.post);
+      if (!userExists) {
+        throw new Error("No such user exists");
+      }
+      if (!postExists) {
+        throw new Error("No such post exists");
+      }
+      const comment = {
+        ...args,
+        id: uuidv4(),
+      };
+      comments.push(comment);
+      return comment;
     },
   },
   Post: {
